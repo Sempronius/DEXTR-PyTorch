@@ -3,10 +3,10 @@ class Path(object):
     @staticmethod
     def db_root_dir(database):
         if database == 'pascal':
-            return '/path/to/PASCAL/VOC2012'  # folder that contains VOCdevkit/.
+            return '/home/ryan/Documents/PASCAL_VOC2012'  # folder that contains VOCdevkit/.
 
         elif database == 'sbd':
-            return '/path/to/SBD/'  # folder with img/, inst/, cls/, etc.
+            return '/home/ryan/Documents/SBD'  # folder with img/, inst/, cls/, etc.
         else:
             print('Database {} not available.'.format(database))
             raise NotImplementedError

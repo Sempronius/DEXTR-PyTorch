@@ -30,17 +30,17 @@ if torch.cuda.is_available():
     print('Using GPU: {} '.format(gpu_id))
 
 # Setting parameters
-use_sbd = False
+use_sbd = False # ******************* try makng this true
 nEpochs = 100  # Number of epochs for training
 resume_epoch = 0  # Default is 0, change if want to resume
 
 p = OrderedDict()  # Parameters to include in report
 classifier = 'psp'  # Head classifier to use
-p['trainBatch'] = 5  # Training batch size
-testBatch = 5  # Testing batch size
+p['trainBatch'] = 3  # Training batch size
+testBatch = 3  # Testing batch size
 useTest = 1  # See evolution of the test set when training?
-nTestInterval = 10  # Run on test set every nTestInterval epochs
-snapshot = 20  # Store a model every snapshot epochs
+nTestInterval = 1  # Run on test set every nTestInterval epochs WAS 10 ***********
+snapshot = 1  # Store a model every snapshot epochs
 relax_crop = 50  # Enlarge the bounding box by relax_crop pixels
 nInputChannels = 4  # Number of input channels (RGB + heatmap of extreme points)
 zero_pad_crop = True  # Insert zero padding when cropping the image
@@ -134,7 +134,8 @@ if resume_epoch != nEpochs:
     # Main Training and Testing Loop
     for epoch in range(resume_epoch, nEpochs):
         start_time = timeit.default_timer()
-
+        print('Start time')
+        print(start_time)
         net.train()
         for ii, sample_batched in enumerate(trainloader):
 
@@ -149,7 +150,13 @@ if resume_epoch != nEpochs:
 
             # Compute the losses, side outputs and fuse
             loss = class_balanced_cross_entropy_loss(output, gts, size_average=False, batch_average=True)
+            
             running_loss_tr += loss.item()
+            
+            
+            print('[Epoch: %d, numImages: %5d]' % (epoch, ii*p['trainBatch']+inputs.data.shape[0]))
+            print('Loss: %f' % loss.item())
+
 
             # Print stuff
             if ii % num_img_tr == num_img_tr - 1:

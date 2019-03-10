@@ -30,7 +30,7 @@ class VOCSegmentation(data.Dataset):
                  root=Path.db_root_dir('pascal'),
                  split='val',
                  transform=None,
-                 download=False,
+                 download=True, # switch from False
                  preprocess=False,
                  area_thres=0,
                  retname=True,
@@ -194,6 +194,7 @@ class VOCSegmentation(data.Dataset):
         _fpath = os.path.join(self.root, self.FILE)
 
         try:
+            #os.chown(self.root,root)
             os.makedirs(self.root)
         except OSError as e:
             if e.errno == errno.EEXIST:

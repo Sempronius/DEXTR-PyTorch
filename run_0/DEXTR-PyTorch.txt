@@ -1,0 +1,24 @@
+trainBatch:3
+nAveGrad:1
+lr:1e-08
+wd:0.0005
+momentum:0.9
+optimizer:SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 1e-08
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+
+Parameter Group 1
+    dampening: 0
+    lr: 1e-07
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+)
+dataset_train:VOC2012(split=['train'],area_thres=0)
+transformations_train:['RandomHorizontalFlip', 'ScaleNRotate:(rot=(-20, 20),scale=(0.75, 1.25))', "CropFromMask:(crop_elems=('image', 'gt'), mask_elem=gt, relax=50,zero_pad=True)", "FixedResize:{'crop_image': (512, 512), 'crop_gt': (512, 512)}", 'ExtremePoints:(sigma=10, pert=5, elem=crop_gt)', 'NormalizeImage', "ExtremePoints:('crop_image', 'extreme_points')", 'ToTensor']
+dataset_test:VOC2012(split=['train'],area_thres=0)
+transformations_test:["CropFromMask:(crop_elems=('image', 'gt'), mask_elem=gt, relax=50,zero_pad=True)", "FixedResize:{'crop_image': (512, 512), 'crop_gt': (512, 512)}", 'ExtremePoints:(sigma=10, pert=0, elem=crop_gt)', 'NormalizeImage', "ExtremePoints:('crop_image', 'extreme_points')", 'ToTensor']

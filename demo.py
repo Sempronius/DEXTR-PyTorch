@@ -4,6 +4,8 @@ from collections import OrderedDict
 from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 
 from torch.nn.functional import upsample
 

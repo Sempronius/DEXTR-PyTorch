@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')
+import nibabel as nib
 
 from torch.nn.functional import upsample
 
@@ -37,7 +38,43 @@ net.eval()
 net.to(device)
 
 #  Read image and click the points
-#image = np.array(Image.open('ims/dog-cat.jpg')) 
+
+# Need to load a nifti file from DL. Load CSV file. Use Nifti file name to find info in CSV. 
+# Use info in CSV to automatically find 4 points. 
+
+# load a nifti file. 
+
+############################################################
+dl_path = '/home/ryan/Documents/Deep_Lesion/Images_png_01' 
+# probably need to be a little creative here when it comes time to load all times. 
+#############################################################
+
+nifti_dir = 'Images_nifti'
+
+dl_path_current = os.path.join(dl_path,nifti_dir)
+
+example_filename = os.path.join(dl_path_current, '000001_01_01_103-115.nii.gz')
+
+img = nib.load(example_filename)
+
+
+
+a = np.array(img.dataobj) #get array of img nifti file. 
+a1 = Image.fromarray(a[:,:,1]) #???????? 
+
+################################################
+plt.imshow(a1,cmap="gray",vmin=-175,vmax=275)
+############################################### 
+########## Take DICOM WINDOWS tab from Csv, and use min and max for vmin and vmax. Image will display appropriately. 
+plt.savefig('savedImage.png') #can't seem to get it to display, so I just save it. 
+################ CAN WE FIGURE OUT HOW TO JUST KEEP THIS FILE/ITEM in memory? instead of having to save it? 
+###############
+
+
+
+################### NEXT STEPS: Need to figure out if we can display the Measurement Coordinates, to confirm they are what we want. If so, then try and feed them into the code below instead of clicking. 
+
+
 image = np.array(Image.open('ims/chest-ct-lungs.jpg'))
 plt.ion()
 plt.axis('off')

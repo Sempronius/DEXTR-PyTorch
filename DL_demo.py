@@ -1,11 +1,15 @@
 import os
+
+os.chdir('/home/ryan/Documents/DEXTR-PyTorch')
+
 import torch
 from collections import OrderedDict
 from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('TkAgg') # QTAGG, QT4AGG, Qt5Agg
+
 import nibabel as nib
 
 from torch.nn.functional import upsample
@@ -53,24 +57,70 @@ nifti_dir = 'Images_nifti'
 
 dl_path_current = os.path.join(dl_path,nifti_dir)
 
-example_filename = os.path.join(dl_path_current, '000001_01_01_103-115.nii.gz')
+#example_filename = os.path.join(dl_path_current, '000001_01_01_103-115.nii.gz')
+example_filename = os.path.join(dl_path_current, '000001_02_01_008-023.nii.gz')
+
 
 img = nib.load(example_filename)
 
 
 
 a = np.array(img.dataobj) #get array of img nifti file. 
-a1 = Image.fromarray(a[:,:,1]) #???????? 
+a1 = Image.fromarray(a[:,:,9]) #???????? 
 
 ################################################
 plt.imshow(a1,cmap="gray",vmin=-175,vmax=275)
 ############################################### 
 ########## Take DICOM WINDOWS tab from Csv, and use min and max for vmin and vmax. Image will display appropriately. 
+
+##################### NOT REALLY SURE THAT VMIN AND VMAX ARE THE WAY TO DO THIS?
+
+
 plt.savefig('savedImage.png') #can't seem to get it to display, so I just save it. 
 ################ CAN WE FIGURE OUT HOW TO JUST KEEP THIS FILE/ITEM in memory? instead of having to save it? 
 ###############
 
+import matplotlib.patches as patches
+fig,ax = plt.subplots(1)
+ax.imshow(a1)
 
+###### NEED TO LOAD CSV AND AUTO LOAD THIS DATA!!!!!! ################### !!!!
+#data comes to us as two x,y coordinates... in 4 comma separated values.
+x1 = 229
+y1 = 258
+x2 = 285
+y2= 325
+###### NEED TO LOAD CSV AND AUTO LOAD THIS DATA!!!!!! ################### !!!!
+
+#first set is top left corner of bounded box.
+# Second set is bottom right corner of bounded box.  
+
+## What we need:
+# bottom left coordinate, width, height.
+# bottom left coordinate:
+#x1,y2 (for bottom and left. So take the x value from first set, and y-value from second set)
+# width = 
+# x-x abs
+width = abs(x1-x2)
+# height = abs(y1-y2) 
+height = abs(y1-y2)
+
+rect = patches.Rectangle((x1,y1),width,height,linewidth=1,edgecolor='r',facecolor='none')
+ax.add_patch(rect)
+
+fig.savefig('savedImage.png')
+
+circ = patches.Circle((272,320),1,edgecolor='r',facecolor='none')
+circ1 = patches.Circle((246,263),1,edgecolor='r',facecolor='none')
+circ2 = patches.Circle((234,305),1,edgecolor='r',facecolor='none')
+circ3 = patches.Circle((280,288),1,edgecolor='r',facecolor='none')
+
+
+ax.add_patch(circ)
+ax.add_patch(circ1)
+ax.add_patch(circ2)
+ax.add_patch(circ3)
+fig.savefig('savedImage.png')
 
 ################### NEXT STEPS: Need to figure out if we can display the Measurement Coordinates, to confirm they are what we want. If so, then try and feed them into the code below instead of clicking. 
 

@@ -66,30 +66,13 @@ files = glob.glob(dl_path + '/**/*.png', recursive=True)
 
 ## make a loop to look at each file. 
 #*********************** SOME FILES WILL NOT BE KEY IMAGES. Need to make an IF then 
-#####################################################################################
-#################################################################################
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
+
+
 foldername = os.path.basename(os.path.dirname(files[0]))
 filename = os.path.basename(files[0])
 comb = foldername + '_' + filename
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
 
-###########################################
-##############################################
-################################################
-##############################################
-x=DL_df.loc[DL_df['File_name'] == comb]       # sometimes this will be empty. So we need an if/else statement. if true
-############################################
-if x.empty == False:
-    # so, if there is something in the dataframe, because it is a key image.
-    # 
-###############################################
-############################################
-###########################################
+x=DL_df.loc[DL_df['File_name'] == comb]
 
 example_filename = os.path.join(dl_path,image_path,'images_png',directory, '000001_02_01_008-023.nii.gz')
 img = nib.load(example_filename)

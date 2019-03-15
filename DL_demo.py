@@ -48,53 +48,89 @@ import pandas as pd
 dl_path = '/home/ryan/Documents/Deep_Lesion/'
 DL_CSV_PATH = os.path.join(dl_path,"DL_info.csv")
 
+# This is a dataframe of the DL_Info.csv
 DL_df = pd.read_csv(DL_CSV_PATH)
-
-
-x=DL_df.iloc[0]
-#### CREATE LOOP HERE TO GO THROUGH 0 to END. And evaluate each filename. 
-
-
-# or...
-x=DL_df.loc[DL_df['File_name'] == '000001_01_01_109.png']
-
 
 
 
 import glob
 files = glob.glob(dl_path + '/**/*.png', recursive=True)
+files_key = []
 
-## make a loop to look at each file. 
-#*********************** SOME FILES WILL NOT BE KEY IMAGES. Need to make an IF then 
-#####################################################################################
-#################################################################################
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
-foldername = os.path.basename(os.path.dirname(files[0]))
-filename = os.path.basename(files[0])
+## make a loop to look at each file
+# need to look at each file, check if it is in DL_DF. If not, delete it. 
+print('Searching files for key images')
+for file in files:
+    foldername = os.path.basename(os.path.dirname(file))
+    filename = os.path.basename(file)
+    comb = foldername + '_' + filename
+    x=DL_df.loc[DL_df['File_name'] == comb]  # search DL_DF for current file in files list
+    if x.empty == False: #if there is a file name in the dataframe that matches the file (because it is a key image)
+        files_key.append(file)
+        print('Found Key Image:')
+        print(comb)
+
+
+
+
+        
+import cv2
+###################### In the end will need loop here through all files_key 
+im = cv2.imread(files_key[3], -1) # -1 is needed for 16-bit image
+foldername = os.path.basename(os.path.dirname(files_key[3]))
+filename = os.path.basename(files_key[3])
 comb = foldername + '_' + filename
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
-# MAKE A LOOP TO GO THROUGH FILES
+x=DL_df.loc[DL_df['File_name'] == comb]
+###### Get windowing information  
+win = x.iloc[0][14]
+win = win.split(",") # turn it into a list. 
+win = list(map(int, win)) # turn the list of str, into a list of int
 
-###########################################
-##############################################
-################################################
-##############################################
-x=DL_df.loc[DL_df['File_name'] == comb]       # sometimes this will be empty. So we need an if/else statement. if true
-############################################
-if x.empty == False:
-    # so, if there is something in the dataframe, because it is a key image.
-    # 
-###############################################
-############################################
-###########################################
+##########################################################################
+###### SOME KEY IMAGES HAVE MULTIPLE FINDINGS, for example, files_key[0]
+##############################################################################
+#********************** WILL NEED TO DEAL WITH THIS ***********************
 
-example_filename = os.path.join(dl_path,image_path,'images_png',directory, '000001_02_01_008-023.nii.gz')
-img = nib.load(example_filename)
-a = np.array(img.dataobj) #get array of img nifti file. 
-a1 = Image.fromarray(a[:,:,9]) # 
+im = im.astype(np.float32, copy=False)-32768  
+# there is an offset in the 16-bit png files, intensity - 32768 = Hounsfield unit
+
+
+# win = list of the two window levels. for example [-175,250]. See above, it is taken directly from DL_df
+def windowing(im, win):
+    # scale intensity from win[0]~win[1] to float numbers in 0~255
+    im1 = im.astype(float)
+    im1 -= win[0]
+    im1 /= win[1] - win[0]
+    im1[im1 > 1] = 1
+    im1[im1 < 0] = 0
+    im1 *= 255
+    return im1
+
+im = windowing(im, win).astype(np.uint8)  # soft tissue window
+# This will generate a nice image with appropriate windowing. 
+
+Image.fromarray(im)
+
+##########
+########## NEXT STEPS --->
+##########
+########################### Automatically load measurement data. And plot it on the image.
+###################################### add bounded boxes too. 
+################################################### Check multiple images to make sure it all looks good. 
+
+
+###### Get windowing information  
+
+
+
+
+
+#example_filename = os.path.join(PATH TO NIFTI FILE)
+#img = nib.load(example_filename)
+#a = np.array(img.dataobj) #get array of img nifti file. 
+#a1 = Image.fromarray(a[:,:,9]) # 
+
+
 
 #  Read image and click the points
 

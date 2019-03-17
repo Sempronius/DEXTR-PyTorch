@@ -70,134 +70,180 @@ for file in files:
         print('Found Key Image:')
         print(comb)
 
-
-
-
         
 import cv2
 ###################### In the end will need loop here through all files_key 
-im = cv2.imread(files_key[3], -1) # -1 is needed for 16-bit image
-foldername = os.path.basename(os.path.dirname(files_key[3]))
-filename = os.path.basename(files_key[3])
-comb = foldername + '_' + filename
-x=DL_df.loc[DL_df['File_name'] == comb]
-###### Get windowing information  
-win = x.iloc[0][14]
-win = win.split(",") # turn it into a list. 
-win = list(map(int, win)) # turn the list of str, into a list of int
 
-##########################################################################
-###### SOME KEY IMAGES HAVE MULTIPLE FINDINGS, for example, files_key[0]
-##############################################################################
-#********************** WILL NEED TO DEAL WITH THIS ***********************
-
-im = im.astype(np.float32, copy=False)-32768  
-# there is an offset in the 16-bit png files, intensity - 32768 = Hounsfield unit
+###################### THIS IS JUST TEMPORARY TO RANDOMLY SHOW SOME EXAMPLES OF BOUNDED BOXES.
+import random
+random_num = random.sample(range(1, 100), 10)
+###################### This is to just seem some examples and make sure everything looks good
+###################### Eventually, this will just be ALL files in files_key. 
 
 
-# win = list of the two window levels. for example [-175,250]. See above, it is taken directly from DL_df
-def windowing(im, win):
-    # scale intensity from win[0]~win[1] to float numbers in 0~255
-    im1 = im.astype(float)
-    im1 -= win[0]
-    im1 /= win[1] - win[0]
-    im1[im1 > 1] = 1
-    im1[im1 < 0] = 0
-    im1 *= 255
-    return im1
+for n in random_num:
+    print('Example:')
+    print(n)
+    im = cv2.imread(files_key[n], -1) # -1 is needed for 16-bit image
+    foldername = os.path.basename(os.path.dirname(files_key[n]))
+    filename = os.path.basename(files_key[n])
+    comb = foldername + '_' + filename
+    x=DL_df.loc[DL_df['File_name'] == comb]
+    print('Filename')
+    print(filename)
+    # win = list of the two window levels. for example [-175,250]. See above, it is taken directly from DL_df
+    def windowing(im, win):
+        # scale intensity from win[0]~win[1] to float numbers in 0~255
+        im1 = im.astype(float)
+        im1 -= win[0]
+        im1 /= win[1] - win[0]
+        im1[im1 > 1] = 1
+        im1[im1 < 0] = 0
+        im1 *= 255
+        return im1
 
-im = windowing(im, win).astype(np.uint8)  # soft tissue window
-# This will generate a nice image with appropriate windowing. 
-
-Image.fromarray(im)
-
-##########
-########## NEXT STEPS --->
-##########
-########################### Automatically load measurement data. And plot it on the image.
-###################################### add bounded boxes too. 
-################################################### Check multiple images to make sure it all looks good. 
-
-
-###### Get windowing information  
+    import matplotlib.patches as patches
 
 
 
+    if x.shape[0] >= 2:
+        # create a for loop
+        for num_row in range(x.shape[0]):
+            ## RELOAD THE IMAGE FILE, there seems to be some issue if we don't do this. End up with a black / blank image. 
+            im = cv2.imread(files_key[n], -1) # -1 is needed for 16-bit image
+            #############################################
+    
+            print(filename)
+            print('has MULTIPLE bounded boxes')
+            
+            ###### Get windowing information ################### 
+            #win = x.iloc[0][14] another way to do it.
+            win = x['DICOM_windows'].iloc[num_row]
+            win = win.split(",") # turn it into a list. 
+            win = list(map(int, win)) # turn the list of str, into a list of int
+            ####################################################
+           
+            #################################################### APPLYING WINDOWING. Muy importante, otherwise image can look terrible, like just a black box. 
+            # there is an offset in the 16-bit png files, intensity - 32768 = Hounsfield unit
+            im = im.astype(np.float32, copy=False)-32768  
+            im = windowing(im, win).astype(np.uint8)  # soft tissue window
+            # This will generate a nice image with appropriate windowing.         
+            
+            ############################ GET 4 point data
+            measurement = x['Measurement_coordinates'].iloc[num_row]
+            measurement = measurement.split(",") # turn it into a list. 
+            measurement = list(map(float, measurement)) # turn the list of str, into a list of int
+            m1_x = round(measurement[0])
+            m1_y = round(measurement[1])
+            m2_x = round(measurement[2])
+            m2_y = round(measurement[3])
+            m3_x = round(measurement[4])
+            m3_y = round(measurement[5])
+            m4_x = round(measurement[6])
+            m4_y = round(measurement[7])
+            
+            ############################
+            
+            
+            ############################ GET BOUNDED BOXES
+            bbox = x['Bounding_boxes'].iloc[num_row]
+            bbox = bbox.split(",") # turn it into a list. 
+            bbox = list(map(float, bbox)) # turn the list of str, into a list of int
+            
+            #bbox data comes to us as two x,y coordinates... in 4 comma separated values.
 
+            x1 = round(bbox[0])
+            y1 = round(bbox[1])
+            x2 = round(bbox[2])
+            y2= round(bbox[3])
+        
+            color = np.uint8(np.random.uniform(255, 255, 4)) #This is white. 
+            c = tuple(map(int, color))
+            #How to make a rectangle 
+            Image.fromarray(im) #image without rectangle
+            im1 = cv2.rectangle(im,(x1,y1),(x2,y2),color=c)
+            ###### ADD IN MEASUREMENTS
+            im2 = cv2.circle(im1,(m1_x,m1_y), 2, (255,255,4), -1)
+            im3 = cv2.circle(im2,(m2_x,m2_y), 2, (255,255,4), -1)
+            im4 = cv2.circle(im3,(m3_x,m3_y), 2, (255,255,4), -1)
+            im5 = cv2.circle(im4,(m4_x,m4_y), 2, (255,255,4), -1)
+            
+            final_image = Image.fromarray(im1) # image with rectangle
+            final_image.show()
+            
+    if x.shape[0] == 1:
+        print('Only one bounded box for')
+        print(filename)
+        
+        
+        ###### Get windowing information ################### 
+        #win = x.iloc[0][14] another way to do it.
+        win = x['DICOM_windows'].iloc[0]
+        win = win.split(",") # turn it into a list. 
+        win = list(map(int, win)) # turn the list of str, into a list of int
+        print('Windowing')
+        print(win)
+        ####################################################
+        
+        #################################################### APPLYING WINDOWING. Muy importante, otherwise image can look terrible, like just a black box. 
+        # there is an offset in the 16-bit png files, intensity - 32768 = Hounsfield unit
+        im = im.astype(np.float32, copy=False)-32768  
+        im = windowing(im, win).astype(np.uint8)  # soft tissue window
+        # This will generate a nice image with appropriate windowing.         
+        
+        ############################ GET 4 point data
+        measurement = x['Measurement_coordinates'].iloc[0]
+        measurement = measurement.split(",") # turn it into a list. 
+        measurement = list(map(float, measurement)) # turn the list of str, into a list of int
+        m1_x = round(measurement[0])
+        m1_y = round(measurement[1])
+        m2_x = round(measurement[2])
+        m2_y = round(measurement[3])
+        m3_x = round(measurement[4])
+        m3_y = round(measurement[5])
+        m4_x = round(measurement[6])
+        m4_y = round(measurement[7])
+        ############################
+        
+        
+        ############################ GET BOUNDED BOXES
+        bbox = x['Bounding_boxes'].iloc[0]
+        bbox = bbox.split(",") # turn it into a list. 
+        bbox = list(map(float, bbox)) # turn the list of str, into a list of int
+        
+        #bbox data comes to us as two x,y coordinates... in 4 comma separated values.
 
-#example_filename = os.path.join(PATH TO NIFTI FILE)
-#img = nib.load(example_filename)
-#a = np.array(img.dataobj) #get array of img nifti file. 
-#a1 = Image.fromarray(a[:,:,9]) # 
+        x1 = round(bbox[0])
+        y1 = round(bbox[1])
+        x2 = round(bbox[2])
+        y2= round(bbox[3])
+    
+        color = np.uint8(np.random.uniform(255, 255, 4)) #This is white. 
+        c = tuple(map(int, color))
+        #How to make a rectangle 
+        print('Image.fromarray(im)')
+        Image.fromarray(im) #image without rectangle
+        print(Image.fromarray(im))
+        im1 = cv2.rectangle(im,(x1,y1),(x2,y2),color=c)
+        
+        ###### ADD IN MEASUREMENTS
+        im2 = cv2.circle(im1,(m1_x,m1_y), 2, (255,255,4), -1)
+        im3 = cv2.circle(im2,(m2_x,m2_y), 2, (255,255,4), -1)
+        im4 = cv2.circle(im3,(m3_x,m3_y), 2, (255,255,4), -1)
+        im5 = cv2.circle(im4,(m4_x,m4_y), 2, (255,255,4), -1)
+        
+        final_image = Image.fromarray(im1) # image with rectangle
+        final_image.show()
+               
+            
+        ######################################## NEXT STEPS
+        
+        ######################################################   LOAD DEXTR-PYTORCH
+        
+        ########################################################################## use measurements to automatically  create a mask.
+        
+        
 
-
-
-#  Read image and click the points
-
-# Need to load a nifti file from DL. Load CSV file. Use Nifti file name to find info in CSV. 
-# Use info in CSV to automatically find 4 points. 
-
-# load a nifti file. 
-
-############################################################
-image_path = 'Images_png_01' 
-# probably need to be a little creative here when it comes time to load all times. 
-#############################################################
-nifti_dir = 'Images_nifti'
-dl_path_current = os.path.join(dl_path,image_path,nifti_dir)
-
-#example_filename = os.path.join(dl_path_current, '000001_01_01_103-115.nii.gz')
-example_filename = os.path.join(dl_path_current, '000001_02_01_008-023.nii.gz')
-img = nib.load(example_filename)
-a = np.array(img.dataobj) #get array of img nifti file. 
-a1 = Image.fromarray(a[:,:,9]) #???????? 
-plt.imshow(a1,cmap="gray",vmin=-175,vmax=275)
-############################################### 
-########## Take DICOM WINDOWS tab from Csv, and use min and max for vmin and vmax. Image will display appropriately. 
-##################### NOT REALLY SURE THAT VMIN AND VMAX ARE THE WAY TO DO THIS?
-plt.savefig('savedImage.png') #can't seem to get it to display, so I just save it. 
-################ CAN WE FIGURE OUT HOW TO JUST KEEP THIS FILE/ITEM in memory? instead of having to save it? 
-###############
-import matplotlib.patches as patches
-fig,ax = plt.subplots(1)
-ax.imshow(a1)
-###### NEED TO LOAD CSV AND AUTO LOAD THIS DATA!!!!!! ################### !!!!
-#data comes to us as two x,y coordinates... in 4 comma separated values.
-x1 = 229
-y1 = 258
-x2 = 285
-y2= 325
-###### NEED TO LOAD CSV AND AUTO LOAD THIS DATA!!!!!! ################### !!!!
-#first set is top left corner of bounded box.
-# Second set is bottom right corner of bounded box.  
-## What we need:
-# bottom left coordinate, width, height.
-# bottom left coordinate:
-#x1,y2 (for bottom and left. So take the x value from first set, and y-value from second set)
-# width = 
-# x-x abs
-width = abs(x1-x2)
-# height = abs(y1-y2) 
-height = abs(y1-y2)
-
-rect = patches.Rectangle((x1,y1),width,height,linewidth=1,edgecolor='r',facecolor='none')
-ax.add_patch(rect)
-
-fig.savefig('savedImage.png')
-
-circ = patches.Circle((272,320),1,edgecolor='r',facecolor='none')
-circ1 = patches.Circle((246,263),1,edgecolor='r',facecolor='none')
-circ2 = patches.Circle((234,305),1,edgecolor='r',facecolor='none')
-circ3 = patches.Circle((280,288),1,edgecolor='r',facecolor='none')
-
-
-ax.add_patch(circ)
-ax.add_patch(circ1)
-ax.add_patch(circ2)
-ax.add_patch(circ3)
-fig.savefig('savedImage.png')
-
-################### NEXT STEPS: Need to figure out if we can display the Measurement Coordinates, to confirm they are what we want. If so, then try and feed them into the code below instead of clicking. 
 
 
 image = np.array(Image.open('ims/chest-ct-lungs.jpg'))

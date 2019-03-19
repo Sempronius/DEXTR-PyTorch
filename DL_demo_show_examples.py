@@ -102,6 +102,10 @@ for n in random_num: #eventually, random_num will need to be range(files_key)
         im1 *= 255
         return im1
 
+    import matplotlib.patches as patches
+
+
+
     if x.shape[0] >= 2:
         # create a for loop
         for num_row in range(x.shape[0]):
@@ -170,8 +174,7 @@ for n in random_num: #eventually, random_num will need to be range(files_key)
     if x.shape[0] == 1:
         print('Only one bounded box for')
         print(filename)
-        ## RELOAD THE IMAGE FILE, there seems to be some issue if we don't do this. End up with a black / blank image. 
-        im = cv2.imread(files_key[n], -1) # -1 is needed for 16-bit image
+        
         
         ###### Get windowing information ################### 
         #win = x.iloc[0][14] another way to do it.
@@ -253,14 +256,18 @@ for n in random_num: #eventually, random_num will need to be range(files_key)
         
 extreme_points_ori = np.array([[m1_x,m1_y], [m2_x,m2_y],[m3_x,m3_y],[m4_x,m4_y]], np.int64)
 
-image = np.stack([im,im,im],axis=2) # THIS IS NECESSARY TO GET INTO RIGHT FORMAT FOR BELOW
 
-#### IMAGE NEEDS TO BE IN FOLLOWING FORMAT: RBG (512,512,3)... uint8
+image = np.array(Image.open('ims/chest-ct-lungs.jpg'))
+plt.ion()
+plt.axis('off')
+plt.imshow(image)
+plt.title('Click the four extreme points of the objects\nHit enter when done (do not close the window)')
+
 results = []
 
 with torch.no_grad():
     while 1:
-        #extreme_points_ori = np.array(plt.ginput(4, timeout=0)).astype(np.int)
+        extreme_points_ori = np.array(plt.ginput(4, timeout=0)).astype(np.int)
 
         #  Crop image to the bounding box from the extreme points and resize
         bbox = helpers.get_bbox(image, points=extreme_points_ori, pad=pad, zero_pad=True)
@@ -275,9 +282,7 @@ with torch.no_grad():
         extreme_heatmap = helpers.cstm_normalize(extreme_heatmap, 255)
 
         #  Concatenate inputs and convert to tensor
-        input_dextr = np.concatenate((resize_image, extreme_heatmap[:, :, np.newaxis]), axis=2) 
-        # extreme_heatmap should be (512, 512)
-        # resize_image(512, 512, 3)        
+        input_dextr = np.concatenate((resize_image, extreme_heatmap[:, :, np.newaxis]), axis=2)
         inputs = torch.from_numpy(input_dextr.transpose((2, 0, 1))[np.newaxis, ...])
 
         # Run a forward pass
@@ -296,9 +301,3 @@ with torch.no_grad():
         # Plot the results
         plt.imshow(helpers.overlay_masks(image / 255, results))
         plt.plot(extreme_points_ori[:, 0], extreme_points_ori[:, 1], 'gx')
-        plt.savefig('savedImage.png') 
-        # This will only work with one example. Need to come up with better way to display image.
-        
-        #################################### LOOP THROUGH A COUPLE OF EXAMPLES.  MAKE SURE IT LOOKS GOOD.
-        ### THEN FIGURE OUT HOW YOU WANT TO SAVE THE DATA. WHAT FORMAT? 
-        ### Folders for actual image and folders for mask with same name? or what?

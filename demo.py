@@ -49,10 +49,15 @@ results = []
 with torch.no_grad():
     while 1:
         extreme_points_ori = np.array(plt.ginput(4, timeout=0)).astype(np.int)
-
         #  Crop image to the bounding box from the extreme points and resize
-        bbox = helpers.get_bbox(image, points=extreme_points_ori, pad=pad, zero_pad=True)
+        bbox = helpers.gbbox = helpers.get_bbox(image, points=extreme_points_ori, pad=pad, zero_pad=True)
+        print('bbox')
+        print(bbox)
+        print(type(bbox))
         crop_image = helpers.crop_from_bbox(image, bbox, zero_pad=True)
+        print('crop_image')
+        print(crop_image.shape)
+        print(type(crop_image))
         resize_image = helpers.fixed_resize(crop_image, (512, 512)).astype(np.float32)
 
         #  Generate extreme point heat map normalized to image values
@@ -63,6 +68,15 @@ with torch.no_grad():
         extreme_heatmap = helpers.cstm_normalize(extreme_heatmap, 255)
 
         #  Concatenate inputs and convert to tensor
+        print('resize_image')
+        print(resize_image)
+        print(resize_image.shape)
+        print(type(resize_image))
+
+        print('extreme_heatmap')
+        print(extreme_heatmap)
+        print(extreme_heatmap.shape)
+        print(type(extreme_heatmap))
         input_dextr = np.concatenate((resize_image, extreme_heatmap[:, :, np.newaxis]), axis=2)
         inputs = torch.from_numpy(input_dextr.transpose((2, 0, 1))[np.newaxis, ...])
 
